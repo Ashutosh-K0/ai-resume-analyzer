@@ -11,89 +11,132 @@ from utils.scoring import extract_match_score, format_ai_response
 st.set_page_config(
     page_title="AI Resume Analyzer",
     page_icon="📄",
-    layout="centered"
+    layout="wide"
 )
 
 
-# ---------------- TITLE ---------------- #
+# ---------------- CUSTOM CSS ---------------- #
 
-st.title("AI Resume Analyzer")
-st.write("Analyze resumes against job descriptions using Gemini AI")
+st.markdown("""
+<style>
+
+.main {
+    background-color: #0E1117;
+}
+
+.stButton>button {
+    width: 100%;
+    background-color: #4CAF50;
+    color: white;
+    border-radius: 10px;
+    height: 3em;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.stTextArea textarea {
+    border-radius: 10px;
+}
+
+.stFileUploader {
+    border-radius: 10px;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 
-# ---------------- FILE UPLOAD ---------------- #
+# ---------------- HEADER ---------------- #
 
-uploaded_resume = st.file_uploader(
-    "Upload Resume (PDF)",
-    type=["pdf"]
-)
+st.title("📄 AI Resume Analyzer")
+st.caption("Analyze resumes against job descriptions using AI-powered evaluation")
 
 
-# ---------------- JOB DESCRIPTION INPUT ---------------- #
+# ---------------- LAYOUT ---------------- #
 
-job_description = st.text_area(
-    "Paste Job Description",
-    height=250
-)
+left_column, right_column = st.columns([1, 1])
 
 
-# ---------------- ANALYZE BUTTON ---------------- #
+# ---------------- LEFT COLUMN ---------------- #
 
-if st.button("Analyze Resume"):
+with left_column:
 
-    # Validate Resume Upload
-    if uploaded_resume is None:
-        st.warning("Please upload a resume PDF.")
+    st.subheader("Upload Resume")
 
-    # Validate Job Description
-    elif not job_description.strip():
-        st.warning("Please enter a job description.")
+    uploaded_resume = st.file_uploader(
+        "Upload Resume PDF",
+        type=["pdf"]
+    )
 
-    else:
+    st.subheader("Job Description")
 
-        with st.spinner("Analyzing resume..."):
+    job_description = st.text_area(
+        "Paste the job description here",
+        height=300
+    )
 
-            # ---------------- PDF TEXT EXTRACTION ---------------- #
 
-            resume_text = extract_text_from_pdf(uploaded_resume)
+# ---------------- RIGHT COLUMN ---------------- #
 
-            # Handle PDF Extraction Errors
-            if "Error while reading PDF" in resume_text:
-                st.error(resume_text)
+with right_column:
 
-            else:
+    st.subheader("Analysis Results")
 
-                # ---------------- PROMPT GENERATION ---------------- #
+    if st.button("Analyze Resume"):
 
-                final_prompt = generate_resume_analysis_prompt(
-                    resume_text,
-                    job_description
-                )
+        # Validation
+        if uploaded_resume is None:
+            st.warning("Please upload a resume PDF.")
 
-                # ---------------- AI ANALYSIS ---------------- #
+        elif not job_description.strip():
+            st.warning("Please enter a job description.")
 
-                ai_response = get_resume_analysis(final_prompt)
+        else:
 
-                # ---------------- RESPONSE FORMATTING ---------------- #
+            with st.spinner("Analyzing resume..."):
 
-                formatted_response = format_ai_response(ai_response)
+                # Extract Resume Text
+                resume_text = extract_text_from_pdf(uploaded_resume)
 
-                # ---------------- SCORE EXTRACTION ---------------- #
-
-                match_score = extract_match_score(formatted_response)
-
-                # ---------------- DISPLAY SCORE ---------------- #
-
-                st.subheader("Match Score")
-
-                if match_score is not None:
-                    st.progress(match_score / 100)
-                    st.success(f"Resume Match Score: {match_score}%")
+                # Handle Extraction Errors
+                if "Error while reading PDF" in resume_text:
+                    st.error(resume_text)
 
                 else:
-                    st.warning("Could not extract match score.")
 
-                # ---------------- DISPLAY ANALYSIS ---------------- #
+                    # Generate Prompt
+                    final_prompt = generate_resume_analysis_prompt(
+                        resume_text,
+                        job_description
+                    )
 
-                st.subheader("Detailed Analysis")
-                st.write(formatted_response)
+                    # AI Response
+                    ai_response = get_resume_analysis(final_prompt)
+
+                    # Format Response
+                    formatted_response = format_ai_response(ai_response)
+
+                    # Extract Score
+                    match_score = extract_match_score(formatted_response)
+
+                    # ---------------- SCORE DISPLAY ---------------- #
+
+                    if match_score is not None:
+
+                        st.metric(
+                            label="Resume Match Score",
+                            value=f"{match_score}%"
+                        )
+
+                        st.progress(match_score / 100)
+
+                    else:
+                        st.warning("Could not extract match score.")
+
+                    # ---------------- ANALYSIS OUTPUT ---------------- #
+
+                    st.markdown("---")
+
+                    st.subheader("Detailed Analysis")
+
+                    st.write(formatted_response)
