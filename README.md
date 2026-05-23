@@ -40,7 +40,7 @@ AI_RESUME_ANALYZER/
 ### Clone Repository
 
 ```bash
-git clone <https://github.com/Ashutosh-K0/ai-resume-analyzer>
+git clone https://github.com/Ashutosh-K0/ai-resume-analyzer
 ```
 
 ### Install Dependencies
